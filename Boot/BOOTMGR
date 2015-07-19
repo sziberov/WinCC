@@ -1,0 +1,240 @@
+function centerText(text, line)
+	x,y = term.getSize()
+	term.setCursorPos(math.ceil((x / 2) - (text:len() / 2)), line)
+	term.write(text)
+end
+
+local x,y = term.getSize()
+
+if not fs.exists("Boot/BCD.ini") then
+	term.clear()
+	term.setCursorPos(1,1)
+	term.setBackgroundColor(colors.white)
+	term.setTextColor(colors.black)
+	term.write(string.rep(" ", x))
+	centerText("WinCC Boot Manager", 1)
+        term.setCursorPos(1,3)
+        term.setTextColor(colors.lightGray)
+        term.setBackgroundColor(colors.black)
+        print("WinCC Failed to start. A recent software change might be the cause.")
+        print("")
+        print("If you dont know how to fix this problem, contact your system administrator or computer manufacturer for assistance.")
+	print("")
+	term.setTextColor(colors.white)
+	print("File: /Boot/BCD.ini")
+        print("")
+        print("Status: Not found")
+        print("")
+        print("Info: The Boot Configuration Data for your PC is")
+	print("      missing.")
+        term.setCursorPos(1,19)
+	term.setBackgroundColor(colors.white)
+        term.setTextColor(colors.black)
+	term.write(string.rep(" ", x))
+        term.setCursorPos(1,19)
+        term.write(" ENTER=Continue")
+        term.setCursorPos(0,0)
+	read()
+	sleep(0.1)
+	term.setBackgroundColor(colors.black)
+	term.clear()
+	shell.run("shell")
+else
+local file = fs.open("Boot/BCD.ini", "r")
+local kernel = nil
+
+if file ~= nil then
+	kernel = file.readLine()
+	kernel = file.readLine()
+	kernel = string.sub(kernel, string.find(kernel, "=") + 2, string.len(kernel))
+	file.close()
+end
+
+
+if fs.exists(".reboot") then
+	local file = fs.open(".reboot", "r")
+
+	if file ~= nil then
+		local command = file.readAll()
+		file.close()
+		fs.delete(".reboot")
+
+		if command == "LOADTO CRAFTOS" then
+			shell.run("shell")
+			return 0
+		end
+	end
+else
+	--os.run({}, kernel .. "/system/kernel", kernel)
+	os.loadAPI(kernel .. "/System/Drivers/iniFiles")
+
+	local config = iniFiles.read("Boot/BCD.ini")
+	local selectedIndex = 1
+	local timer = 31
+	local running = true
+	local len = 0
+
+	if type(config.loader) ~= "table" then len = 0 else
+		for k, v in pairs(config.loader) do
+			len = len + 1
+		end
+	end
+
+
+
+	if len > 1 then
+		term.setBackgroundColor(colors.black)
+		term.setTextColor(colors.white)
+		term.clear()
+		term.setCursorPos(1, 1)
+		term.setCursorBlink(true)
+		os.startTimer(0)
+
+		local t = {}
+
+		if config ~= nil then
+			for k, v in pairs(config.loader) do
+				term.clearLine()
+				table.insert(t, k)
+			end
+		end
+
+
+		while running do
+			local event, key = os.pullEvent()
+
+			if event == "timer" then
+				timer = timer - 1
+				os.startTimer(1)
+			end
+
+			if event == "key" then
+				timer = -30
+
+				if key == 200 then
+					if selectedIndex > 1 then selectedIndex = selectedIndex - 1 end
+				end
+
+				if key == 208 then
+					if selectedIndex < len then selectedIndex = selectedIndex + 1 end
+				end
+
+				if key == 28 then
+					term.clear()
+					term.setCursorPos(1, 1)
+					term.setBackgroundColor(colors.black)
+					term.setTextColor(colors.white)
+					term.clear()
+
+					if t[selectedIndex] == "%VERSION%" then
+						shell.run(config.loader[t[selectedIndex]])
+					else
+						os.run({}, config.loader[t[selectedIndex]], kernel)
+					end
+				end
+			end
+
+	term.setBackgroundColor(colors.black)
+	term.clear()
+     term.setCursorPos(1,19)
+     term.setBackgroundColor(colors.white)
+     term.setTextColor(colors.black)
+     term.write(string.rep(" ", x))
+     term.setCursorPos(1,19)
+     term.write(" ENTER=Choose")
+	term.setCursorPos(1,1)
+	term.setBackgroundColor(colors.white)
+	term.setTextColor(colors.black)
+	term.write(string.rep(" ", x))
+	centerText("WinCC Boot Manager", 1)
+			term.setBackgroundColor(colors.black)
+			term.setTextColor(colors.white)
+			term.setCursorPos(1, 3)
+			term.setCursorBlink(false)
+			print("  Please select the operating system to start:")
+			print("")
+
+			for k, v in pairs(config.loader) do
+				print("    " .. string.gsub(k, "%%VERSION%%", os.version()))
+			end
+
+			term.setTextColor(colors.lightGray)
+			print("")
+			print("  (Use the arrow keys to move the hightlight to")
+			print("  your choice, then press ENTER.)")
+			print("")
+
+			if timer > 0 then
+				print("  Seconds until the hightlighted system will be")
+				print("  started: "..timer.."")
+			elseif timer == 0 then
+				term.clear()
+				term.setCursorPos(1, 1)
+
+				if t[selectedIndex] == "%VERSION%" then
+					shell.run(config.loader[t[selectedIndex]])
+				else
+					os.run({}, config.loader[t[selectedIndex]], kernel)
+				end
+			else
+				print(string.rep(" ", term.getSize()))
+				print(string.rep(" ", term.getSize()))
+			end
+
+			term.setCursorPos(5, 4 + selectedIndex)
+			term.setBackgroundColor(colors.white)
+			term.setTextColor(colors.black)
+			term.write("                                         >")
+			term.setCursorPos(5, 4 + selectedIndex)
+			term.write("" .. string.gsub(t[selectedIndex], "%%VERSION%%", os.version()))
+		end
+	elseif len == 1 then
+		for k, v in pairs(config.loader) do
+			if k == "%VERSION%" then
+				shell.run(v)
+			else
+				os.run({}, v, kernel)
+			end
+		end
+	else
+		term.clear()
+	        term.setCursorPos(1,1)
+	        term.setBackgroundColor(colors.white)
+	        term.setTextColor(colors.black)
+	        term.write(string.rep(" ", x))
+	        centerText("WinCC Boot Manager", 1)
+                term.setCursorPos(1,3)
+                term.setTextColor(colors.lightGray)
+                term.setBackgroundColor(colors.black)
+                print("WinCC Failed to start. A recent software change might be the cause.")
+                print("")
+                print("If you dont know how to fix this problem, contact your system administrator or computer manufacturer for assistance.")
+				print("")
+				term.setTextColor(colors.white)
+				print("File: /Boot/BCD.ini")
+                print("")
+                print("Status: [loader] Section in BCD.ini is empty")
+                print("")
+                print("Info: An error occurred while attempting to read")
+				print("      the boot configuration data.")
+                term.setCursorPos(1,19)
+	        	term.setBackgroundColor(colors.white)
+                term.setTextColor(colors.black)
+	        	term.write(string.rep(" ", x))
+                term.setCursorPos(1,19)
+                term.write(" ENTER=Continue")
+                term.setCursorPos(0,0)
+		read()
+		sleep(0.1)
+		term.setBackgroundColor(colors.black)
+		term.clear()
+		shell.run("shell")
+	end
+end
+
+
+
+
+
+	return 0
+end

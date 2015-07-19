@@ -1,0 +1,105 @@
+local app = application.Create(os.getProcessInfo(os.getCurrentProcess()), os)
+local mainForm = form.Create("Run")
+app:addForm(mainForm, "Run")
+mainForm:show()
+
+
+local openDialog = widgets.dialogs.OpenDialog.Create(mainForm, "OpenDialog")
+openDialog.onExecute = function(sender)
+	sender.parent.widgets.txtCmd.text = sender.fileName or ""
+	os.sendMessage(hwnd, {msg = "refresh"})
+end
+
+local txtCmd = widgets.Edit.Create(mainForm, "txtCmd")
+txtCmd.left = 8
+txtCmd.top = 5
+txtCmd.width = app.canvas.size.x - 8
+txtCmd.text = ""
+
+
+local btnCmd = widgets.Button.Create(mainForm, "btnCmd")
+btnCmd.width = 8
+btnCmd.left = app.canvas.size.x - btnCmd.width - btnCmd.width - btnCmd.width - 2
+btnCmd.top = app.canvas.size.y - 2
+btnCmd.caption = "Ok"
+btnCmd.onClick = function(sender)
+	if (txtCmd.text == nil) or (txtCmd.text == "") then
+		os.messageBox("message", "Please specify any command.", "Error", 
+		{ 
+			{caption = "OK", 
+				onClick = function(sender)
+					os.hideMessageBox()
+				end
+			},
+		}, "defText")
+	else
+		os.shell.run(txtCmd.text)
+		app:terminate()
+	end
+end
+
+local btnCancel = widgets.Button.Create(mainForm, "btnCancel")
+btnCancel.width = 8
+btnCancel.left = app.canvas.size.x - btnCancel.width - btnCancel.width  - 1
+btnCancel.top = app.canvas.size.y - 2
+btnCancel.caption = "Cancel"
+btnCancel.onClick = function(sender)
+	app:terminate()
+end
+
+local btnBrowse = widgets.Button.Create(mainForm, "btnBrowse")
+btnBrowse.width = 8
+btnBrowse.left = app.canvas.size.x - btnBrowse.width
+btnBrowse.top = app.canvas.size.y - 2
+btnBrowse.caption = "Browse"
+btnBrowse.onClick = function(sender)
+	openDialog:execute()
+end
+
+
+local lblOpen = widgets.Label.Create(mainForm, "lblOpen")
+lblOpen.left = 2
+lblOpen.top = 5
+lblOpen.caption = "Open:"
+lblOpen.width = 5
+lblOpen.height = 1
+
+local lblExec = widgets.Label.Create(mainForm, "lblExec")
+lblExec.left = 2
+lblExec.top = 2
+lblExec.caption = "Type the name of a program, and WinCC will open"
+lblExec.width = app.canvas.size.x - 2
+lblExec.height = 1
+
+local lblExec = widgets.Label.Create(mainForm, "lblExec2")
+lblExec.left = 2
+lblExec.top = 3
+lblExec.caption = "it for you."
+lblExec.width = app.canvas.size.x - 2
+lblExec.height = 1
+
+local lblExec = widgets.Label.Create(mainForm, "lblExec3")
+lblExec.left = 2
+lblExec.top = 7
+lblExec.caption = "Memo:"
+lblExec.width = 5
+lblExec.height = 1
+
+-----------------------------------------------------------
+local helpLst = widgets.ListBox.Create(mainForm, "helpLst")
+helpLst.top = 7
+helpLst.left = 7
+helpLst.width = app.canvas.size.x - 6
+helpLst.height = app.canvas.size.y - 9 - 1
+
+table.insert(mainForm.widgets.helpLst.list, "exec          Run")
+table.insert(mainForm.widgets.helpLst.list, "taskmgr       Task Manager")
+table.insert(mainForm.widgets.helpLst.list, "explorer      Explorer")
+table.insert(mainForm.widgets.helpLst.list, "winver        System Version")
+table.insert(mainForm.widgets.helpLst.list, "lnkcreate     Create Icon")
+table.insert(mainForm.widgets.helpLst.list, "logoff        Classic Log Off")
+table.insert(mainForm.widgets.helpLst.list, "ncvm          Command Prompt")
+table.insert(mainForm.widgets.helpLst.list, "control       Control Panel")
+-----------------------------------------------------------
+
+app:run()

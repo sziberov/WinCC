@@ -1,0 +1,114 @@
+local app = application.Create(os.getProcessInfo(os.getCurrentProcess()), os)
+local desktop = form.Create("Control Panel")
+local lastTime = 0
+
+
+
+app:addForm(desktop, "Control Panel")
+desktop:show()
+desktop.bgcolor = colors.white
+
+
+desktop.onTerminate = function(sender)
+	return true
+end
+
+
+local lbl = widgets.Label.Create(desktop, "lbl")
+lbl.left = 1
+lbl.top = 1
+lbl.caption = "Adjust your computer's settings"
+lbl.forecolor = colors.blue
+lbl.bgcolor = colors.lightBlue
+lbl.width = app.canvas.size.x
+lbl.height = 1
+
+
+local lbl1 = widgets.Label.Create(desktop, "lbl1")
+lbl1.left = 2
+lbl1.top = 3
+lbl1.caption = "BootLoader"
+lbl1.forecolor = colors.green
+lbl1.bgcolor = colors.white
+lbl1.width = app.canvas.size.x
+lbl1.height = 1
+
+local BCDbtn = widgets.Button.Create(desktop, "BCDbtn")
+BCDbtn.top = 5
+BCDbtn.bgcolor = colors.white
+BCDbtn.forecolor = colors.blue
+BCDbtn.forecolor2 = colors.blue
+BCDbtn.caption = "Edit your Boot Configuration Data"
+BCDbtn.onClick = function(sender) os.shell.run("limetext \"/Boot/BCD.ini/\"") end
+BCDbtn.width = 34
+BCDbtn.left = 2
+
+
+local lbl2 = widgets.Label.Create(desktop, "lbl2")
+lbl2.left = 2
+lbl2.top = 7
+lbl2.caption = "System Settings"
+lbl2.forecolor = colors.green
+lbl2.bgcolor = colors.white
+lbl2.width = app.canvas.size.x
+lbl2.height = 1
+
+local SETbtn = widgets.Button.Create(desktop, "SETbtn")
+SETbtn.top = 9
+SETbtn.bgcolor = colors.white
+SETbtn.forecolor = colors.blue
+SETbtn.forecolor2 = colors.blue
+SETbtn.caption = "Edit your system settings"
+SETbtn.onClick = function(sender) os.shell.run("limetext \"" .. os.getSystemPath() .. "/System/Config/win.ini/\"") end
+SETbtn.width = 26
+SETbtn.left = 2
+
+
+
+
+function elseapp()
+local listView = widgets.FileListView.Create(desktop, "listView")
+listView.bgcolor = colors.white
+listView.showScroll = false
+listView.top = 2
+listView.left = 1
+listView.width = app.canvas.size.x
+listView.height = app.canvas.size.y - 2
+
+
+listView.path = "home:/WinCC/UserData/ProgramGroups/Settings/"
+listView:refreshList()
+
+listView.onClick = function(sender)
+	listView.isCtrlDown = app:isCtrlDown()
+
+	local time = os.time()
+
+	if (time - lastTime) * 10 < config.PROCESS_TIMER then
+		local selected = listView.selectedList
+		if #selected > 0 then
+			--listView:navigate(listView.list[selected[1]].name, true, os)
+			--listView.selectedList = {}
+			if listView.list[selected[1]].dir then
+				listView:navigate(listView.list[selected[1]].name, true, os)
+				listView.selectedList = {}
+			else
+				local fileName = string.gsub("home:/" .. listView.path .. "/" .. listView.list[selected[1]].name, "//", "/")
+				os.shell.run(fileName)
+			end
+		end
+	end
+
+	lastTime = time
+end
+
+
+
+if params[2] ~= nil then
+	listView:navigate(params[2])
+else
+	listView:navigate("home:/WinCC/UserData/ProgramGroups/Settings/")
+end
+end
+
+app:run()

@@ -1,0 +1,421 @@
+local app = application.Create(os.getProcessInfo(os.getCurrentProcess()), os)
+local desktop = form.Create("Desktop")
+local lastTime = 0
+
+
+
+app.canvas.effect = {
+	getbgcolor = function(self, x, y, bgcolor, forecolor, char)
+		if (y == 1) or (x == app.canvas.size.x) then
+			return config.DESKTOP_COLOR
+		else
+			return bgcolor
+		end
+	end,
+
+	getforecolor = function(self, x, y, bgcolor, forecolor, char)
+		return forecolor
+	end,
+
+	getchar = function(self, x, y, bgcolor, forecolor, char)
+		if (y == 1) or (x == app.canvas.size.x) then
+			return " "
+		else
+			return char
+		end
+	end,
+}
+
+
+
+app:addForm(desktop, "Desktop")
+desktop:show()
+desktop.bgcolor = config.DESKTOP_COLOR
+desktop.controlBox = false
+
+os.getProcessInfo(os.getCurrentProcess()).showInTaskbar = false
+
+desktop.onTerminate = function(sender)
+	return false
+end
+
+
+if not fs.exists(os.getSystemPath() .. "/UserData/Desktop") then
+	fs.makeDir(os.getSystemPath() .. "/UserData/Desktop")
+end
+
+local pointDebugger = widgets.Label.Create(desktop, "lbl")
+pointDebugger.bgcolor = config.DESKTOP_COLOR
+pointDebugger.top = 0
+pointDebugger.left = 1
+pointDebugger.width = 1
+pointDebugger.height = 1
+pointDebugger.caption = " "
+
+
+
+local listView = widgets.FileListView.Create(desktop, "listView")
+listView.bgcolor = config.DESKTOP_COLOR
+listView.top = 0
+listView.left = 1
+listView.width = app.canvas.size.x
+listView.height = app.canvas.size.y
+listView.path = os.getSystemPath() .. "/UserData/Desktop"
+listView:refreshList()
+
+listView.onClick = function(sender)
+	local time = os.time()
+
+	if (time - lastTime) * 10 < config.PROCESS_TIMER then
+		local selected = listView.selectedList
+		if #selected > 0 then
+			--listView:navigate(listView.list[selected[1]].name)
+			--listView.selectedList = {}
+			if listView.list[selected[1]].dir then
+				os.shell.run("explorer \"" .. listView.path .. "/" .. listView.list[selected[1]].name .. "\"")
+			else
+				local fileName = string.gsub("home:/" .. listView.path .. "/" .. listView.list[selected[1]].name, "//", "/")
+				os.shell.run(fileName)
+			end
+		end
+	end
+
+	lastTime = time
+end
+
+function waterMark()
+	local waterMark = widgets.Label.Create(listView, "waterMark")
+	waterMark.left = app.canvas.size.x - 8
+	waterMark.top = 16
+	waterMark.caption = "WinCC 7"
+	waterMark.bgcolor = config.DESKTOP_COLOR
+	waterMark.forecolor = colors.white
+	waterMark.width = 7
+	waterMark.height = 1
+
+	local waterMark2 = widgets.Label.Create(listView, "waterMark2")
+	waterMark2.left = app.canvas.size.x - 29
+	waterMark2.top = 17
+	waterMark2.caption = "For testing only. Build 0153"
+	waterMark2.bgcolor = config.DESKTOP_COLOR
+	waterMark2.forecolor = colors.white
+	waterMark2.width = 28
+	waterMark2.height = 1
+end
+
+--waterMark()
+
+------------------------------------------------------------------------------------------------------------------------
+listView.onContextMenu = function(sender, item, x, y)
+	local menu = widgets.PopupMenu.Create()
+	--menu.bgcolor = colors.lightGray
+	menu.tag = item
+	local selList = listView.selectedList
+	if #selList < 1 then
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("New folder", function(sender)
+			os.messageBox("input", "New folder name:", "Create Folder...", 
+			{ 
+			{caption = "OK", 
+					onClick = function(sender)
+						local fileName = sender.parent.widgets.edit.text
+	
+						if string.find(fileName, "%/") or string.find(fileName, "%\\") or
+							string.find(fileName, "%:") or string.find(fileName, "%*") or
+							string.find(fileName, "%?") or string.find(fileName, "%\"") or
+							string.find(fileName, "%<") or string.find(fileName, "%>") or
+							string.find(fileName, "%|") then
+							app:showMessage("Invalid folder name.")
+						else
+							app:showMessage(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+							if fs.exists(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName) then
+								os.messageBox("message", "\"" .. fileName .. "\"Already exists. Delete?", "Warning", 
+								{ 
+									{caption = "Yes", 
+										onClick = function(sender)
+											fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+	
+											fs.makeDir(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+	
+											os.hideMessageBox()
+										end
+									},
+	
+									{caption = "No",
+										onClick = function(sender)
+											os.hideMessageBox()
+										end
+									} 
+	
+								}, "defText")
+							else
+								fs.makeDir(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+							end
+						end
+	
+						listView:refreshList()
+						desktop:refresh()
+						os.hideMessageBox()
+					end
+				},
+	
+				{caption = "Cancel",
+					onClick = function(sender)
+						os.hideMessageBox()
+					end
+				} 
+	
+			}, "New Folder")	
+	end))	
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("New...", function(sender)
+			os.messageBox("input", "New file name:", "Create File...", 
+			{ 
+				{caption = "OK", 
+					onClick = function(sender)
+						local fileName = sender.parent.widgets.edit.text
+	
+						if string.find(fileName, "%/") or string.find(fileName, "%\\") or
+							string.find(fileName, "%:") or string.find(fileName, "%*") or
+							string.find(fileName, "%?") or string.find(fileName, "%\"") or
+							string.find(fileName, "%<") or string.find(fileName, "%>") or
+							string.find(fileName, "%|") then
+							app:showMessage("Invalid file name.")
+						else
+							app:showMessage(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+							if fs.exists(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName) then
+								os.messageBox("message", "\"" .. fileName .. "\"Already exists. Delete?", "Warning", 
+								{ 
+									{caption = "Yes", 
+										onClick = function(sender)
+											fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+	
+											local f = fs.open(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName, "w")
+											f.write("\r\n")
+											f.close()
+	
+											os.hideMessageBox()
+										end
+									},
+	
+									{caption = "No",
+										onClick = function(sender)
+											os.hideMessageBox()
+										end
+									} 
+	
+								}, "defText")
+							else
+								local f = fs.open(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName, "w")
+								f.write("\r\n")
+								f.close()
+							end
+						end
+	
+						listView:refreshList()
+						desktop:refresh()
+						os.hideMessageBox()
+					end
+				},
+	
+				{caption = "Cancel",
+					onClick = function(sender)
+						os.hideMessageBox()
+					end
+				} 
+	
+			}, "New File.txt")	
+	end))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+	end
+	local selList = listView.selectedList
+	if #selList > 0 then
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Rename", function(sender)
+	local selList = listView.selectedList
+	if #selList > 0 then
+		os.messageBox("input", "New file name:", "Rename \"" .. listView.list[selList[1]].name .. "\"", 
+		{ 
+			{caption = "OK", 
+				onClick = function(sender)
+					local fileName = sender.parent.widgets.edit.text
+
+					if string.find(fileName, "%/") or string.find(fileName, "%\\") or
+						string.find(fileName, "%:") or string.find(fileName, "%*") or
+						string.find(fileName, "%?") or string.find(fileName, "%\"") or
+						string.find(fileName, "%<") or string.find(fileName, "%>") or
+						string.find(fileName, "%|") then
+						app:showMessage("Invalid file name.")
+					else
+						fs.move(string.gsub(listView.path, "home:/", "", 1) .. "/" .. listView.list[selList[1]].name,
+							string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+					end
+
+					listView:refreshList()
+					desktop:refresh()
+					os.hideMessageBox()
+				end
+			},
+
+			{caption = "Cancel",
+				onClick = function(sender)
+					os.hideMessageBox()
+				end
+			} 
+
+		}, listView.list[selList[1]].name)
+	end
+	end))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Delete", function(sender)
+	local selList = listView.selectedList
+	if #selList > 0 then
+		os.messageBox("message", "Are you sure?", "Delete File(s)", 
+		{ 
+			{caption = "Yes", 
+				onClick = function(sender)
+					for i, v in ipairs(listView.selectedList) do
+						fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. listView.list[v].name)
+					end
+
+					listView:refreshList()
+					desktop:refresh()
+					os.hideMessageBox()
+				end
+			},
+
+			{caption = "No",
+				onClick = function(sender)
+					os.hideMessageBox()
+				end
+			} 
+
+		}, "defText")
+	end
+	end))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Create shortcut", function(sender)
+	if #(listView.selectedList) > 0 then
+		os.shell.run("lnkcreate \"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\" \"" ..
+			listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. ".lnk\"")
+	end
+	end))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Copy", function(sender)
+	local selList = listView.selectedList
+	if #selList > 0 then
+		local fileList = { action = "_COPY", files = {} }
+
+		for i, v in ipairs(listView.selectedList) do
+			table.insert(fileList.files, listView.path .. "/" .. listView.list[v].name)
+		end
+
+		os.copyToClipboard(fileList, "_FILELIST")
+	end
+	end))
+	end
+	local selList = listView.selectedList
+	if #selList < 1 then
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Paste", function(sender)
+	local fileList = os.pasteFromClipboard("_FILELIST")
+	local conflictList = {}
+
+	if (fileList ~= nil) and (fileList.files ~= nil) then
+		--error("paste")
+
+		for i, v in ipairs(fileList.files) do
+			local from = string.gsub(v, "home:/", "", 1)
+			local to = string.gsub(listView.path, "home:/", "", 1) .. "/" .. os.extractFileName(from)
+
+			if fs.exists(to) then
+				table.insert(conflictList, {from = from, to = to})
+			else
+				if fileList.action == "_COPY" then
+					fs.copy(from, to)
+				else
+					fs.move(from, to)
+				end
+			end
+		end
+
+		if #conflictList > 0 then
+			frmWarning.widgets.lstWarning.list = {}
+
+			for i, v in ipairs(conflictList) do
+				table.insert(frmWarning.widgets.lstWarning.list, "home:/" .. v.from)
+			end
+
+			frmWarning:show()
+			os.sendMessage(hwnd, {msg = "refresh"})
+		end
+
+		-----------------------
+		listView:refreshList()
+		desktop:refresh()
+	end
+	end))
+	end
+	local selList = listView.selectedList
+	if #selList > 0 then
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Cut", function(sender)
+	local selList = listView.selectedList
+	if #selList > 0 then
+		local fileList = { action = "_MOVE", files = {} }
+
+		for i, v in ipairs(listView.selectedList) do
+			table.insert(fileList.files, listView.path .. "/" .. listView.list[v].name)
+		end
+
+		os.copyToClipboard(fileList, "_FILELIST")
+	end
+	end))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Open with...",
+	function(sender)
+		if #(listView.selectedList) > 0 then
+			local s = listView.list[listView.selectedList[1]].name
+			local ext = "?"
+			if (string.len(s) > 0) and (string.find(s, "%.") and s[0] ~= "." ) then
+				local fn = user.split(s, ".")
+				ext = fn[#fn]
+			end
+
+			os.shell.run("opendlg " .. ext .. " \"" ..
+				listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
+		end
+	end))
+
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Run in CraftOS Mode", 
+	function(sender)
+		if #(listView.selectedList) > 0 then
+			os.shell.run("ncvm.exe \"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
+		end
+	end))
+	end
+	local selList = listView.selectedList
+	if #selList > 0 then
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Open", function(sender)
+		os.shell.run("\"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
+	end))
+	end
+	local selList = listView.selectedList
+	if #selList < 1 then
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+	table.insert(menu.items, widgets.PopupMenu.CreateItem("Refresh", function(sender) listView:refreshList() desktop:refresh() end))
+	end
+
+
+	widgets.popupMenu(menu, x + 1, y + 1)
+end
+------------------------------------------------------------------------------------------------------------------------
+
+--for i=1, 1 do
+	--table.insert(listView.list, { icon = "home:/WinCC/system/iconres/Computer.pic", file = "home:/WinCC/ProgramFiles/explorer.exe", name = "Computer" })
+--end
+
+--for i=1,100 do
+	--table.insert(listView.list, { icon = {}, name = "Tst" .. i .. ".exe" })
+	--table.insert(listView.list, { icon = {}, name = "Brian Griffin" })
+--end
+
+
+os.startTimer(0.1, function() 
+	--listView:refreshList()
+	desktop:refresh()
+end )
+app:run()

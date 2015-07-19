@@ -1,0 +1,110 @@
+
+local app = application.Create(os.getProcessInfo(os.getCurrentProcess()), os)
+local frmMain = form.Create("About WinCC")
+
+app:addForm(frmMain, "About System")
+frmMain:show()
+
+local systemName = "WinCC 7 Ultimate"
+local systemSP = "Service Pack 2"
+local systemDeveloper = "(C) Corporation Puzzletime"
+local systemBuild = "0155"
+local systemManufacturer = "Puzzletime, KAYOver"
+
+if fs.exists("WinCC/System/logo.pic") then
+	local logo = widgets.PaintBox.Create(frmMain, "logo")
+	local logoImg = user.loadCanvas(os.getSystemPath() .. "/System/logo.pic")
+	logo.height = logoImg.size.y
+	logo.width = logoImg.size.x + 1
+	logo.top = 3
+	logo.left = 37
+	logo.canvas = logoImg
+end
+
+--local logo2 = widgets.PaintBox.Create(frmMain, "logo2")
+--local logo2Img = user.loadCanvas(os.getSystemPath() .. "/System/logo2.pic")
+--logo2.height = logo2Img.size.y
+--logo2.width = logo2Img.size.x + 1
+--logo2.top = 14
+--logo2.left = 37
+--logo2.canvas = logo2Img
+
+local lbl = widgets.Label.Create(frmMain, "lbl")
+lbl.left = 1
+lbl.top = 1
+lbl.caption = "View basic information about your system"
+lbl.forecolor = colors.blue
+lbl.bgcolor = colors.lightBlue
+lbl.width = app.canvas.size.x
+lbl.height = 1
+
+local lbl1 = widgets.Label.Create(frmMain, "lbl1")
+lbl1.top = 3
+lbl1.width = 13
+lbl1.left = 2
+lbl1.caption = "WinCC Edition"
+
+--local lbl1Line = widgets.Label.Create(frmMain, "lbl1Line")
+--lbl1Line.top = 3
+--lbl1Line.width = 22
+--lbl1Line.left = 15
+--lbl1Line.forecolor = colors.gray
+--lbl1Line.caption = "----------------------"
+
+local lbl2 = widgets.Label.Create(frmMain, "lbl2")
+lbl2.top = 5
+lbl2.width = 30
+lbl2.left = 3
+lbl2.forecolor = colors.gray
+lbl2.caption = ""..systemName..""
+
+local lbl3 = widgets.Label.Create(frmMain, "lbl3")
+lbl3.top = 7
+lbl3.width = 30
+lbl3.left = 3
+lbl3.forecolor = colors.gray
+lbl3.caption = ""..systemSP..""
+
+local lbl4 = widgets.Label.Create(frmMain, "lbl4")
+lbl4.top = 9
+lbl4.width = 30
+lbl4.left = 3
+lbl4.forecolor = colors.gray
+lbl4.caption = ""..systemDeveloper..""
+
+local lbl5 = widgets.Label.Create(frmMain, "lbl5")
+lbl5.top = 11
+lbl5.width = 6
+lbl5.left = 2
+lbl5.caption = "System"
+
+--local lbl5Line = widgets.Label.Create(frmMain, "lbl5Line")
+--lbl5Line.top = 11
+--lbl5Line.width = 29
+--lbl5Line.left = 8
+--lbl5Line.forecolor = colors.gray
+--lbl5Line.caption = "-----------------------------"
+
+local lbl6 = widgets.Label.Create(frmMain, "lbl6")
+lbl6.top = 13
+lbl6.width = 30
+lbl6.left = 3
+lbl6.forecolor = colors.gray
+lbl6.caption = "Build: "..systemBuild..""
+
+local lbl7 = widgets.Label.Create(frmMain, "lbl7")
+lbl7.top = 15
+lbl7.width = 34
+lbl7.left = 3
+lbl7.forecolor = colors.gray
+lbl7.caption = "Manufacturer: "..systemManufacturer..""
+
+
+
+
+
+
+
+
+os.startTimer(0.1, function() os.sendMessage(hwnd, {msg = "refresh"}) end )
+app:run()

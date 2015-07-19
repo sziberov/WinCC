@@ -1,0 +1,108 @@
+local app = application.Create(os.getProcessInfo(os.getCurrentProcess()), os)
+local mainForm = form.Create("Open with")
+app:addForm(mainForm, "Open with")
+mainForm:show()
+
+
+local args = params
+local customName = ""
+local customPath = ""
+
+function firstToUpper(str)
+    return (str:gsub("^%l", string.upper))
+end
+
+
+function listInstalledSoftware()
+	keys = os.getRegistryBranchKeys("installed")
+	list = {}
+	for i, v in ipairs(keys) do
+		list[v] = os.getRegistryKeyValue("installed", v, "")
+	end
+	return list
+end
+
+
+
+local openDialog = widgets.dialogs.OpenDialog.Create(mainForm, "OpenDialog")
+openDialog.onExecute = function(sender)
+	if sender.fileName ~= nil then
+		customName = firstToUpper(string.gsub(os.extractFileName(sender.fileName), "%.exe", ""))
+		customPath = "\"" .. sender.fileName .. "\" \"%FILENAME%\"" 
+		sender.parent.widgets.appList:add(customName)
+	end
+
+	os.sendMessage(hwnd, {msg = "refresh"})
+end
+
+
+
+local lbl1 = widgets.Label.Create(mainForm, "lbl1")
+lbl1.left = 2
+lbl1.top = 2
+lbl1.caption = "Choose program you want to use:"
+lbl1.width = app.canvas.size.x - 2
+lbl1.height = 1
+
+
+local appList = widgets.ListBox.Create(mainForm, "appList")
+appList.top = 4
+appList.height = app.canvas.size.y - 9
+appList.width = app.canvas.size.x + 1
+appList.left = 0
+
+local installed = listInstalledSoftware()
+for k, v in pairs(installed) do
+	appList:add(k)
+end
+
+
+local chbRemember = widgets.CheckBox.Create(mainForm, "chbRemember")
+chbRemember.bgcolor = colors.lightGray
+chbRemember.width = 25
+chbRemember.left = 2
+chbRemember.top = app.canvas.size.y - 4
+chbRemember.checked = true
+chbRemember.caption = "Always use this program"
+if args[2] == "?" then
+	chbRemember.checked = false
+	chbRemember.grayed = false
+end
+
+
+
+
+local btnOpen = widgets.Button.Create(mainForm, "btnOpen")
+btnOpen.width = 8
+btnOpen.left = app.canvas.size.x - btnOpen.width - btnOpen.width - 1
+btnOpen.top = app.canvas.size.y - 2
+btnOpen.caption = "Ok"
+btnOpen.onClick = function(sender)
+	if chbRemember.checked then
+		os.setRegistryKeyValue("extensions", args[2], installed[appList.list[appList.index]])
+	end
+	--error(tostring(args[3]))
+	os.shell.run(string.gsub(installed[appList.list[appList.index]], "%%FILENAME%%", tostring(args[3])))
+	app:terminate()
+end
+
+local btnCancel = widgets.Button.Create(mainForm, "btnCancel")
+btnCancel.width = 8
+btnCancel.left = app.canvas.size.x - btnCancel.width 
+btnCancel.top = app.canvas.size.y - 2
+btnCancel.caption = "Cancel"
+btnCancel.onClick = function(sender)
+	app:terminate()
+end
+
+local btnBrowse = widgets.Button.Create(mainForm, "btnBrowse")
+btnBrowse.width = 8
+btnBrowse.left = app.canvas.size.x - btnBrowse.width
+btnBrowse.top = app.canvas.size.y - 4
+btnBrowse.caption = "Browse"
+btnBrowse.onClick = function(sender)
+	openDialog:execute()
+end
+
+
+app:run()

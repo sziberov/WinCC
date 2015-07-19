@@ -1,0 +1,45 @@
+local app = application.Create(os.getProcessInfo(os.getCurrentProcess()), os)
+local mainForm = form.Create("")
+
+
+
+app:addForm(mainForm, "")
+mainForm.controlBox = false
+mainForm.bgcolor = colors.black
+mainForm:show()
+os.getProcessInfo(os.getCurrentProcess()).showInTaskbar = false
+
+local panel = widgets.Panel.Create(mainForm, "Panel")
+panel.top = 0
+panel.left = 0
+panel.width = app.canvas.size.x
+panel.height = 1
+panel.bgcolor = colors.black
+
+
+
+function open()
+	if fs.exists("WinCC/System/oskrnlDbg") then
+		os.messageBox("message", "WinCC is running in debug mo-\nde. To proceed to work, click\nYes. Click No to restart.", "Desktop", 
+		{ 
+			{caption = "No",
+				onClick = function(sender)
+					os.hideMessageBox()
+					app:terminate()
+					os.shell.restart()
+				end
+			},
+
+			{caption = "Yes", 
+				onClick = function(sender)
+					os.hideMessageBox()
+					app:terminate()
+				end
+			}
+		}, "defText")
+	end
+end
+
+open()
+
+app:run()

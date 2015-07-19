@@ -1,0 +1,21 @@
+if _EMULATED then
+	shell.run("cd \"" .. os.getSystemPath() .. "/UserData/\"")
+	if _WHAT_TO_RUN ~= nil then
+		shell.run(_WHAT_TO_RUN)
+	end
+else
+	if not fs.exists("Boot/BOOTMGR") then
+		term.setTextColor(colors.lightGray)
+		term.clear()
+		term.setCursorPos(1,2)
+		term.write("BOOTMGR is missing")
+		term.setCursorPos(1,3)
+		term.write("Press Enter to launch default shell")
+		term.setCursorPos(0,0)
+		read()
+		term.setCursorPos(1,1)
+		term.clear()
+	else
+		shell.run("Boot/BOOTMGR")
+	end
+end
