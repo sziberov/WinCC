@@ -22,8 +22,10 @@ function MessageBoxCreate(message, canvas, buttons)
 					self.width, self.height, colors.lightBlue)
 				self.canvas:fillrect(math.floor(self.canvas.size.x / 2) - math.floor(self.width / 2) + 1, math.floor(self.canvas.size.y / 2)  - math.floor(self.height / 2) + 1, 
 					self.width - 2, self.height - 2, colors.lightGray)
+				self.canvas:fillrect(math.floor(self.canvas.size.x / 2) - math.floor(self.width / 2) + 1, math.floor(self.canvas.size.y / 2)  - math.floor(self.height / 2) + 1, 
+					self.width - 2, self.height - 4, colors.white)
 
-				self.canvas.bgcolor = colors.lightGray
+				self.canvas.bgcolor = colors.white
 				self.canvas.forecolor = colors.black
 
 				local texts = user.split(self.message.text, "\n")

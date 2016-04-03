@@ -110,69 +110,255 @@ listView.onContextMenu = function(sender, item, x, y)
 	local menu = widgets.PopupMenu.Create()
 	--menu.bgcolor = colors.lightGray
 	menu.tag = item
+
 	local selList = listView.selectedList
 	if #selList < 1 then
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("New folder", function(sender)
-			os.messageBox("input", "New folder name:", "Create Folder...", 
-			{ 
-			{caption = "OK", 
-					onClick = function(sender)
-						local fileName = sender.parent.widgets.edit.text
-	
-						if string.find(fileName, "%/") or string.find(fileName, "%\\") or
-							string.find(fileName, "%:") or string.find(fileName, "%*") or
-							string.find(fileName, "%?") or string.find(fileName, "%\"") or
-							string.find(fileName, "%<") or string.find(fileName, "%>") or
-							string.find(fileName, "%|") then
-							app:showMessage("Invalid folder name.")
-						else
-							app:showMessage(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-							if fs.exists(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName) then
-								os.messageBox("message", "\"" .. fileName .. "\"Already exists. Delete?", "Warning", 
-								{ 
-									{caption = "Yes", 
-										onClick = function(sender)
-											fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-	
-											fs.makeDir(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-	
-											os.hideMessageBox()
-										end
-									},
-	
-									{caption = "No",
-										onClick = function(sender)
-											os.hideMessageBox()
-										end
-									} 
-	
-								}, "defText")
-							else
-								fs.makeDir(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-							end
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Refresh", function(sender) listView:refreshList() desktop:refresh() end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Paste", function(sender)
+		local fileList = os.pasteFromClipboard("_FILELIST")
+		local conflictList = {}
+
+		if (fileList ~= nil) and (fileList.files ~= nil) then
+			--error("paste")
+
+			for i, v in ipairs(fileList.files) do
+				local from = string.gsub(v, "home:/", "", 1)
+				local to = string.gsub(listView.path, "home:/", "", 1) .. "/" .. os.extractFileName(from)
+
+				if fs.exists(to) then
+					table.insert(conflictList, {from = from, to = to})
+				else
+					if fileList.action == "_COPY" then
+						fs.copy(from, to)
+					else
+						fs.move(from, to)
+					end
+				end
+			end
+
+			if #conflictList > 0 then
+				os.messageBox("message", "There is already a file with\nthe same name. No files will\nbe changed.", "Copy File", 
+				{ 
+					{caption = "Ok",
+						onClick = function(sender)
+							os.hideMessageBox()
 						end
-	
+					}
+				}, "defText")
+			end
+
+			-----------------------
+			listView:refreshList()
+			desktop:refresh()
+		end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("New...", function(sender)
+				os.messageBox("input", "New file name:", "Create File...", 
+				{ 
+					{caption = "OK", 
+						onClick = function(sender)
+							local fileName = sender.parent.widgets.edit.text
+		
+							if string.find(fileName, "%/") or string.find(fileName, "%\\") or
+								string.find(fileName, "%:") or string.find(fileName, "%*") or
+								string.find(fileName, "%?") or string.find(fileName, "%\"") or
+								string.find(fileName, "%<") or string.find(fileName, "%>") or
+								string.find(fileName, "%|") then
+								app:showMessage("Invalid file name.")
+							else
+								app:showMessage(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+								if fs.exists(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName) then
+									os.messageBox("message", "\"" .. fileName .. "\"Already exists. Delete?", "Warning", 
+									{ 
+										{caption = "Yes", 
+											onClick = function(sender)
+												fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+		
+												local f = fs.open(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName, "w")
+												f.write("\r\n")
+												f.close()
+		
+												os.hideMessageBox()
+											end
+										},
+		
+										{caption = "No",
+											onClick = function(sender)
+												os.hideMessageBox()
+											end
+										} 
+		
+									}, "defText")
+								else
+									local f = fs.open(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName, "w")
+									f.write("\r\n")
+									f.close()
+								end
+							end
+		
+							listView:refreshList()
+							desktop:refresh()
+							os.hideMessageBox()
+						end
+					},
+		
+					{caption = "Cancel",
+						onClick = function(sender)
+							os.hideMessageBox()
+						end
+					} 
+		
+				}, "New File.txt")	
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("New folder", function(sender)
+				os.messageBox("input", "New folder name:", "Create Folder...", 
+				{ 
+				{caption = "OK", 
+						onClick = function(sender)
+							local fileName = sender.parent.widgets.edit.text
+		
+							if string.find(fileName, "%/") or string.find(fileName, "%\\") or
+								string.find(fileName, "%:") or string.find(fileName, "%*") or
+								string.find(fileName, "%?") or string.find(fileName, "%\"") or
+								string.find(fileName, "%<") or string.find(fileName, "%>") or
+								string.find(fileName, "%|") then
+								app:showMessage("Invalid folder name.")
+							else
+								app:showMessage(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+								if fs.exists(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName) then
+									os.messageBox("message", "\"" .. fileName .. "\"Already exists. Delete?", "Warning", 
+									{ 
+										{caption = "Yes", 
+											onClick = function(sender)
+												fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+		
+												fs.makeDir(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+		
+												os.hideMessageBox()
+											end
+										},
+		
+										{caption = "No",
+											onClick = function(sender)
+												os.hideMessageBox()
+											end
+										} 
+		
+									}, "defText")
+								else
+									fs.makeDir(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
+								end
+							end
+		
+							listView:refreshList()
+							desktop:refresh()
+							os.hideMessageBox()
+						end
+					},
+		
+					{caption = "Cancel",
+						onClick = function(sender)
+							os.hideMessageBox()
+						end
+					} 
+		
+				}, "New Folder")	
+		end))	
+	end
+
+	if #selList > 0 then
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Open", function(sender)
+			os.shell.run("\"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Run in CraftOS Mode", 
+		function(sender)
+			if #(listView.selectedList) > 0 then
+				os.shell.run("ncvm.exe \"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
+			end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Open with...",
+		function(sender)
+			if #(listView.selectedList) > 0 then
+				local s = listView.list[listView.selectedList[1]].name
+				local ext = "?"
+				if (string.len(s) > 0) and (string.find(s, "%.") and s[0] ~= "." ) then
+					local fn = user.split(s, ".")
+					ext = fn[#fn]
+				end
+
+				os.shell.run("opendlg " .. ext .. " \"" ..
+					listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
+			end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Cut", function(sender)
+		local selList = listView.selectedList
+		if #selList > 0 then
+			local fileList = { action = "_MOVE", files = {} }
+
+			for i, v in ipairs(listView.selectedList) do
+				table.insert(fileList.files, listView.path .. "/" .. listView.list[v].name)
+			end
+
+			os.copyToClipboard(fileList, "_FILELIST")
+		end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Copy", function(sender)
+		local selList = listView.selectedList
+		if #selList > 0 then
+			local fileList = { action = "_COPY", files = {} }
+
+			for i, v in ipairs(listView.selectedList) do
+				table.insert(fileList.files, listView.path .. "/" .. listView.list[v].name)
+			end
+
+			os.copyToClipboard(fileList, "_FILELIST")
+		end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Create shortcut", function(sender)
+		if #(listView.selectedList) > 0 then
+			os.shell.run("lnkcreate \"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\" \"" ..
+				listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. ".lnk\"")
+		end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Delete", function(sender)
+		local selList = listView.selectedList
+		if #selList > 0 then
+			os.messageBox("message", "Are you sure you want to\npermanently delete this file?", "Delete File(s)", 
+			{ 
+				{caption = "Yes", 
+					onClick = function(sender)
+						for i, v in ipairs(listView.selectedList) do
+							fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. listView.list[v].name)
+						end
+
 						listView:refreshList()
 						desktop:refresh()
 						os.hideMessageBox()
 					end
 				},
-	
-				{caption = "Cancel",
+
+				{caption = "No",
 					onClick = function(sender)
 						os.hideMessageBox()
 					end
 				} 
-	
-			}, "New Folder")	
-	end))	
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("New...", function(sender)
-			os.messageBox("input", "New file name:", "Create File...", 
+
+			}, "defText")
+		end
+		end))
+		table.insert(menu.items, widgets.PopupMenu.CreateItem("Rename", function(sender)
+		local selList = listView.selectedList
+		if #selList > 0 then
+			os.messageBox("input", "New file name:", "Rename \"" .. listView.list[selList[1]].name .. "\"", 
 			{ 
 				{caption = "OK", 
 					onClick = function(sender)
 						local fileName = sender.parent.widgets.edit.text
-	
+
 						if string.find(fileName, "%/") or string.find(fileName, "%\\") or
 							string.find(fileName, "%:") or string.find(fileName, "%*") or
 							string.find(fileName, "%?") or string.find(fileName, "%\"") or
@@ -180,225 +366,26 @@ listView.onContextMenu = function(sender, item, x, y)
 							string.find(fileName, "%|") then
 							app:showMessage("Invalid file name.")
 						else
-							app:showMessage(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-							if fs.exists(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName) then
-								os.messageBox("message", "\"" .. fileName .. "\"Already exists. Delete?", "Warning", 
-								{ 
-									{caption = "Yes", 
-										onClick = function(sender)
-											fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-	
-											local f = fs.open(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName, "w")
-											f.write("\r\n")
-											f.close()
-	
-											os.hideMessageBox()
-										end
-									},
-	
-									{caption = "No",
-										onClick = function(sender)
-											os.hideMessageBox()
-										end
-									} 
-	
-								}, "defText")
-							else
-								local f = fs.open(string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName, "w")
-								f.write("\r\n")
-								f.close()
-							end
+							fs.move(string.gsub(listView.path, "home:/", "", 1) .. "/" .. listView.list[selList[1]].name,
+								string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
 						end
-	
+
 						listView:refreshList()
 						desktop:refresh()
 						os.hideMessageBox()
 					end
 				},
-	
+
 				{caption = "Cancel",
 					onClick = function(sender)
 						os.hideMessageBox()
 					end
 				} 
-	
-			}, "New File.txt")	
-	end))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
-	end
-	local selList = listView.selectedList
-	if #selList > 0 then
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Rename", function(sender)
-	local selList = listView.selectedList
-	if #selList > 0 then
-		os.messageBox("input", "New file name:", "Rename \"" .. listView.list[selList[1]].name .. "\"", 
-		{ 
-			{caption = "OK", 
-				onClick = function(sender)
-					local fileName = sender.parent.widgets.edit.text
 
-					if string.find(fileName, "%/") or string.find(fileName, "%\\") or
-						string.find(fileName, "%:") or string.find(fileName, "%*") or
-						string.find(fileName, "%?") or string.find(fileName, "%\"") or
-						string.find(fileName, "%<") or string.find(fileName, "%>") or
-						string.find(fileName, "%|") then
-						app:showMessage("Invalid file name.")
-					else
-						fs.move(string.gsub(listView.path, "home:/", "", 1) .. "/" .. listView.list[selList[1]].name,
-							string.gsub(listView.path, "home:/", "", 1) .. "/" .. fileName)
-					end
-
-					listView:refreshList()
-					desktop:refresh()
-					os.hideMessageBox()
-				end
-			},
-
-			{caption = "Cancel",
-				onClick = function(sender)
-					os.hideMessageBox()
-				end
-			} 
-
-		}, listView.list[selList[1]].name)
-	end
-	end))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Delete", function(sender)
-	local selList = listView.selectedList
-	if #selList > 0 then
-		os.messageBox("message", "Are you sure?", "Delete File(s)", 
-		{ 
-			{caption = "Yes", 
-				onClick = function(sender)
-					for i, v in ipairs(listView.selectedList) do
-						fs.delete(string.gsub(listView.path, "home:/", "", 1) .. "/" .. listView.list[v].name)
-					end
-
-					listView:refreshList()
-					desktop:refresh()
-					os.hideMessageBox()
-				end
-			},
-
-			{caption = "No",
-				onClick = function(sender)
-					os.hideMessageBox()
-				end
-			} 
-
-		}, "defText")
-	end
-	end))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Create shortcut", function(sender)
-	if #(listView.selectedList) > 0 then
-		os.shell.run("lnkcreate \"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\" \"" ..
-			listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. ".lnk\"")
-	end
-	end))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Copy", function(sender)
-	local selList = listView.selectedList
-	if #selList > 0 then
-		local fileList = { action = "_COPY", files = {} }
-
-		for i, v in ipairs(listView.selectedList) do
-			table.insert(fileList.files, listView.path .. "/" .. listView.list[v].name)
+			}, listView.list[selList[1]].name)
 		end
-
-		os.copyToClipboard(fileList, "_FILELIST")
+		end))
 	end
-	end))
-	end
-	local selList = listView.selectedList
-	if #selList < 1 then
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Paste", function(sender)
-	local fileList = os.pasteFromClipboard("_FILELIST")
-	local conflictList = {}
-
-	if (fileList ~= nil) and (fileList.files ~= nil) then
-		--error("paste")
-
-		for i, v in ipairs(fileList.files) do
-			local from = string.gsub(v, "home:/", "", 1)
-			local to = string.gsub(listView.path, "home:/", "", 1) .. "/" .. os.extractFileName(from)
-
-			if fs.exists(to) then
-				table.insert(conflictList, {from = from, to = to})
-			else
-				if fileList.action == "_COPY" then
-					fs.copy(from, to)
-				else
-					fs.move(from, to)
-				end
-			end
-		end
-
-		if #conflictList > 0 then
-			frmWarning.widgets.lstWarning.list = {}
-
-			for i, v in ipairs(conflictList) do
-				table.insert(frmWarning.widgets.lstWarning.list, "home:/" .. v.from)
-			end
-
-			frmWarning:show()
-			os.sendMessage(hwnd, {msg = "refresh"})
-		end
-
-		-----------------------
-		listView:refreshList()
-		desktop:refresh()
-	end
-	end))
-	end
-	local selList = listView.selectedList
-	if #selList > 0 then
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Cut", function(sender)
-	local selList = listView.selectedList
-	if #selList > 0 then
-		local fileList = { action = "_MOVE", files = {} }
-
-		for i, v in ipairs(listView.selectedList) do
-			table.insert(fileList.files, listView.path .. "/" .. listView.list[v].name)
-		end
-
-		os.copyToClipboard(fileList, "_FILELIST")
-	end
-	end))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Open with...",
-	function(sender)
-		if #(listView.selectedList) > 0 then
-			local s = listView.list[listView.selectedList[1]].name
-			local ext = "?"
-			if (string.len(s) > 0) and (string.find(s, "%.") and s[0] ~= "." ) then
-				local fn = user.split(s, ".")
-				ext = fn[#fn]
-			end
-
-			os.shell.run("opendlg " .. ext .. " \"" ..
-				listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
-		end
-	end))
-
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Run in CraftOS Mode", 
-	function(sender)
-		if #(listView.selectedList) > 0 then
-			os.shell.run("ncvm.exe \"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
-		end
-	end))
-	end
-	local selList = listView.selectedList
-	if #selList > 0 then
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Open", function(sender)
-		os.shell.run("\"" .. listView.path .. "/" .. listView.list[listView.selectedList[1]].name .. "\"")
-	end))
-	end
-	local selList = listView.selectedList
-	if #selList < 1 then
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("-", nil))
-	table.insert(menu.items, widgets.PopupMenu.CreateItem("Refresh", function(sender) listView:refreshList() desktop:refresh() end))
-	end
-
 
 	widgets.popupMenu(menu, x + 1, y + 1)
 end
@@ -416,6 +403,6 @@ end
 
 os.startTimer(0.1, function() 
 	--listView:refreshList()
-	desktop:refresh()
+		desktop:refresh()
 end )
 app:run()

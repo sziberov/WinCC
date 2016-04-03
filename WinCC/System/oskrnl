@@ -1695,10 +1695,17 @@ end
 
 
 function Load()
-	term.clear()
 	local status, err = pcall(Init)
-	timer = 1
+	local t = {}
+	local i = 0
 
+	for token in string.gmatch(err, "(%w+):(%w+)") do
+		table.insert(t, token)
+		i = i + 1
+	end
+	local moduleName = string.upper(t[1])
+	term.clear()
+	timer = 1
 	if not status then
 		term.setBackgroundColor(colors.black)
 		term.clear()
@@ -1708,19 +1715,11 @@ function Load()
 		term.clear()
 		term.setCursorPos(1, 1)
 
-		local t = {}
-		local i = 0
 
-		for token in string.gmatch(err, "(%w+):(%w+)") do
-			table.insert(t, token)
-			i = i + 1
-		end
-
-		local moduleName = t[1]
 
 		print("A problem has been detected and WinCC has been shut down to prevent damage to your computer. ")
 		print("")
-		print("" .. moduleName .. "_module_crash")
+		print("" .. moduleName .. "_MODULE_CRASH")
 		print("")
 		print("If this is the first time you have seen this error, restart your computer. Otherwise, contact software developer or server administrator for more details regarding this error.")
 		print("")

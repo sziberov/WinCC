@@ -43,7 +43,7 @@ function Create()
 					canvas.forecolor = self.forecolor
 
 					for i, v in ipairs(items) do
-						canvas:setCursorPos(self.pleft, self.ptop - i + 1)
+						canvas:setCursorPos(self.pleft, self.ptop - self.height + i - 1)
 						--canvas:write(v.text)
 						if v.text ~= "-" then
 							canvas.forecolor = self.forecolor2
@@ -95,7 +95,7 @@ function Create()
 
 
 		mouseClick = function(self, button, x, y)
-			if (self.canvas.size.y - self.ptop < self.height + 1) then
+			if (self.canvas.size.y - self.ptop < self.height + 1) and (self.canvas.size.y - self.ptop > self.height + 1) then
 				if (x >= self.left) and (x <= self.left + self.width) and (y >= self.top) and (y <= self.top + self.height) then
 					local items = self.items
 					local index = #items - (y - self.top - 0)

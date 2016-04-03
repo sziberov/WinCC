@@ -129,18 +129,20 @@ local startMenu = widgets.PopupMenu.Create()
 startMenu.forecolor2 = colors.blue
 startMenu.forecolor = colors.black
 startMenu.bgcolor = colors.white
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|      ShutDown >", function(sender) sdMenuOpen() end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|----------------", nil))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|About System    ", function(sender) os.shell.run("winver.exe") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Run App         ", function(sender) os.shell.run("exec.exe") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Control Panel   ", function(sender) os.shell.run("control.exe") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Computer        ", function(sender) os.shell.run("explorer.exe") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|----------------", nil))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Pictures        ", function(sender) os.shell.run("explorer \"" .. os.getSystemPath() .. "/UserData/Pictures/\"") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Documents       ", function(sender) os.shell.run("explorer \"" .. os.getSystemPath() .. "/UserData/Documents/\"") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Programs        ", function(sender) os.shell.run("explorer \"" .. os.getSystemPath() .. "/UserData/AppData/StartMenu/Programs/\"") end))
-table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|----------------", nil))
 table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|WinCC 7         ", nil))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|----------------", nil))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Programs        ", function(sender) os.shell.run("explorer \"" .. os.getSystemPath() .. "/UserData/AppData/StartMenu/Programs/\"") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Documents       ", function(sender) os.shell.run("explorer \"" .. os.getSystemPath() .. "/UserData/Documents/\"") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Pictures        ", function(sender) os.shell.run("explorer \"" .. os.getSystemPath() .. "/UserData/Pictures/\"") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|----------------", nil))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Computer        ", function(sender) os.shell.run("explorer.exe") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Control Panel   ", function(sender) os.shell.run("control.exe") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|Run App         ", function(sender) os.shell.run("exec.exe") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|About System    ", function(sender) os.shell.run("winver.exe") end))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|----------------", nil))
+table.insert(startMenu.items, widgets.PopupMenu.CreateItem("H|      ShutDown >", function(sender) sdMenuOpen() end))
+
+
 
 local sdMenu = widgets.PopupMenu.Create()
 sdMenu.forecolor2 = colors.black

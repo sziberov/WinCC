@@ -8,7 +8,7 @@ frmMain:show()
 local systemName = "WinCC 7 Ultimate"
 local systemSP = "Service Pack 2"
 local systemDeveloper = "(C) Corporation Puzzletime"
-local systemBuild = "0155"
+local systemBuild = "0156"
 local systemManufacturer = "Puzzletime, KAYOver"
 
 if fs.exists("WinCC/System/logo.pic") then
