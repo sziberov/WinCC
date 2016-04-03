@@ -25,4 +25,4 @@
 <img src="http://storage8.static.itmages.ru/i/16/0403/h_1459699014_8694720_8313ede822.png"/>
 ####), you can try to boot in Debug-Mode and proceed to fixing your system. 
 
-####[WARING: There is no 100% guarantee that you can do this without a BSOD (Blue Screen of Death).]
+####[WARING: There is no 100% guarantee that you can do this without a BSOD (Blue Screen of Death) or error.]
